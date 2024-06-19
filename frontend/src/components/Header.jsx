@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const Header = ({ month, setMonth }) => {
   return (
@@ -7,8 +7,23 @@ const Header = ({ month, setMonth }) => {
       <label>
         Select Month:
         <select value={month} onChange={(e) => setMonth(e.target.value)}>
-          {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m) => (
-            <option key={m} value={m}>{m}</option>
+          {[
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+          ].map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
           ))}
         </select>
       </label>

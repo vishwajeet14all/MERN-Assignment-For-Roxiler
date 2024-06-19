@@ -11,9 +11,9 @@ const {
 
 router.get("/initialize", initializeDatabase);
 router.get("/transactions", getTransactions);
-router.get("/statistics/:month", getStatistics);
-router.get("/barchart/:month", getBarChart);
-router.get('/piechart/:month', getPieChart);
-router.get("/combined/:month", getCombinedData);
+router.get("/statistics", getStatistics);
+router.get("/barchart", getBarChart);
+router.get('/piechart', getPieChart);
+router.get("/combined", getCombinedData);
 
 module.exports = router;

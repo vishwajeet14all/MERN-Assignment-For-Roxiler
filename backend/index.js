@@ -7,8 +7,12 @@ const app = express();
 const PORT = 8000;
 
 app.use(cors());
+
+
 // Middlewares
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 // Database Connection
 connectDB();

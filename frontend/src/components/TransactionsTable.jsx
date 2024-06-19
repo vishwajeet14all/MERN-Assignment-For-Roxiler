@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const TransactionsTable = ({ transactions, onSearch }) => {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
   const handleSearch = () => {
@@ -25,7 +25,7 @@ const TransactionsTable = ({ transactions, onSearch }) => {
         placeholder="Search transactions"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+        onKeyPress={(e) => e.key === "Enter" && handleSearch()}
       />
       <button onClick={handleSearch}>Search</button>
       <table>
@@ -43,16 +43,21 @@ const TransactionsTable = ({ transactions, onSearch }) => {
               <td>{transaction.title}</td>
               <td>{transaction.description}</td>
               <td>{transaction.price}</td>
-              <td>{transaction.dateOfSale}</td>
+              <td>
+                {transaction.dateOfSale
+                  ? new Date(transaction.dateOfSale).toLocaleDateString()
+                  : ""}
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <button onClick={handlePrevious} disabled={page === 1}>Previous</button>
+      <button onClick={handlePrevious} disabled={page === 1}>
+        Previous
+      </button>
       <button onClick={handleNext}>Next</button>
     </div>
   );
 };
 
 export default TransactionsTable;
-

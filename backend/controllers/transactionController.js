@@ -1,38 +1,92 @@
 const Transaction = require("../models/Transaction");
 const axios = require("axios");
-
 const initializeDatabase = require("../utils/initializeDatabase");
 
+//!---------------------
+//
+//!---------------------
 const getTransactions = async (req, res) => {
   const { search, page = 1, perPage = 10 } = req.query;
+  console.log(req.query);
+
+  // Validate page and perPage
+  const pageNumber = parseInt(page);
+  const perPageNumber = parseInt(perPage);
+
+  if (
+    isNaN(pageNumber) ||
+    pageNumber <= 0 ||
+    isNaN(perPageNumber) ||
+    perPageNumber <= 0
+  ) {
+    return res.status(400).send("Invalid page or perPage value");
+  }
+  // Build the query object
   const query = search
     ? {
         $or: [
           { title: new RegExp(search, "i") },
           { description: new RegExp(search, "i") },
-          { price: parseInt(search) },
-        ],
+          { price: isNaN(parseInt(search)) ? null : parseInt(search) },
+        ].filter((condition) => condition.price !== null), // Remove null price condition if search is not a number
       }
     : {};
 
   try {
     const transactions = await Transaction.find(query)
-      .skip((page - 1) * perPage)
-      .limit(Number(perPage));
+      .skip((pageNumber - 1) * perPageNumber)
+      .limit(perPageNumber);
+
+    const totalCount = await Transaction.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / perPageNumber);
+
     res.json(transactions);
   } catch (error) {
+    console.error(error);
     res.status(500).send(error.message);
   }
 };
 
+//!---------------------
+//
+//!---------------------
+const getMonthNumber = (monthName) => {
+  const monthsMap = {
+    January: 1,
+    February: 2,
+    March: 3,
+    April: 4,
+    May: 5,
+    June: 6,
+    July: 7,
+    August: 8,
+    September: 9,
+    October: 10,
+    November: 11,
+    December: 12,
+  };
+  // Convert monthName to title case to ensure case insensitivity
+  const formattedMonthName =
+    monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  return monthsMap[formattedMonthName];
+};
+
+//!---------------------
+//getStatistics
+//!---------------------
 const getStatistics = async (req, res) => {
-  const month = parseInt(req.params.month);
+  const monthStr = req.query.month; // Use req.query.month for query params
+  const month = getMonthNumber(monthStr);
+  // console.log("Month:", month);
+  // Ensure month is a valid value (e.g., between 1 and 12)
+  if (isNaN(month) || month < 1 || month > 12) {
+    return res.status(400).json({ error: "Invalid month parameter" });
+  }
   try {
     const totalSaleAmount = await Transaction.aggregate([
       { $match: { $expr: { $eq: [{ $month: "$dateOfSale" }, month] } } },
       { $group: { _id: null, totalAmount: { $sum: "$price" } } },
     ]);
-
     const totalSoldItems = await Transaction.countDocuments({
       $expr: { $eq: [{ $month: "$dateOfSale" }, month] },
       sold: true,
@@ -41,7 +95,6 @@ const getStatistics = async (req, res) => {
       $expr: { $eq: [{ $month: "$dateOfSale" }, month] },
       sold: false,
     });
-
     res.json({
       totalSaleAmount: totalSaleAmount[0]?.totalAmount || 0,
       totalSoldItems,
@@ -52,23 +105,33 @@ const getStatistics = async (req, res) => {
     res.status(500).send(error.message);
   }
 };
-const getPieChart = async (req, res) => {
-    const month = parseInt(req.params.month);
 
-    try {
-        const categories = await Transaction.aggregate([
-            { $match: { $expr: { $eq: [{ $month: "$dateOfSale" }, month] } } },
-            { $group: { _id: "$category", count: { $sum: 1 } } }
-        ]);
-        res.json(categories);
-    } catch (error) {
-        res.status(500).send(error.message);
-    }
+//!---------------------
+//getPieChart
+//!---------------------
+const getPieChart = async (req, res) => {
+  const monthStr = req.query.month;
+  const month = getMonthNumber(monthStr);
+  // console.log("Month:", month);
+  try {
+    const categories = await Transaction.aggregate([
+      { $match: { $expr: { $eq: [{ $month: "$dateOfSale" }, month] } } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+    ]);
+    res.json(categories);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
 };
 
+//!---------------------
+//getBarChart
+//!---------------------
 const getBarChart = async (req, res) => {
-  console.log("Hello");
-  const month = parseInt(req.params.month);
+  const monthStr = req.query.month;
+  const month = getMonthNumber(monthStr);
+  console.log("Month:", month);
+
   const ranges = [
     { range: "0-100", min: 0, max: 100 },
     { range: "101-200", min: 101, max: 200 },
@@ -103,17 +166,20 @@ const getBarChart = async (req, res) => {
   }
 };
 
+//!---------------------
+//
+//!---------------------
 const getCombinedData = async (req, res) => {
-  const month = parseInt(req.params.month);
+  const month = req.query.month;
   try {
     const statistics = await axios.get(
-      `http://localhost:8000/api/statistics/${month}`
+      `http://localhost:8000/api/statistics/?month=${month}`
     );
     const barChart = await axios.get(
-      `http://localhost:8000/api/barchart/${month}`
+      `http://localhost:8000/api/barchart/?month=${month}`
     );
     const pieChart = await axios.get(
-      `http://localhost:8000/api/piechart/${month}`
+      `http://localhost:8000/api/piechart/?month=${month}`
     );
 
     res.json({

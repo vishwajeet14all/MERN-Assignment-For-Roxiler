@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { Chart as ChartJS, registerables } from 'chart.js'; // import Chart and registerables
-import { Pie } from 'react-chartjs-2';
 
 ChartJS.register(...registerables); // register the controllers
 
